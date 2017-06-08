@@ -133,14 +133,14 @@ public class Tomasulo extends JFrame implements ActionListener{
 	 *ldst：load缓存列表(4行4列) 
 	 *regst：寄存器列表(3行23列) 
 	 * */
-	private	String  instst[][]=new String[7][4], resst[][]=new String[6][8],
+	private	String  instst[][]=new String[7][4], resst[][]=new String[6][9],
 					ldst[][]=new String[4][4], regst[][]=new String[3][23],
 					stst[][]=new String[4][4];
-	private String  culinstst[][]=new String[7][4], culresst[][]=new String[6][8],
+	private String  culinstst[][]=new String[7][4], culresst[][]=new String[6][9],
 			        culldst[][]=new String[4][4], culregst[][]=new String[3][23],
 			        culstst[][]=new String[4][4];
 	/*将以上String值加入到列表框中*/
-	private	JLabel  instjl[][]=new JLabel[7][4], resjl[][]=new JLabel[6][8],
+	private	JLabel  instjl[][]=new JLabel[7][4], resjl[][]=new JLabel[6][9],
 					ldjl[][]=new JLabel[4][4], regjl[][]=new JLabel[3][23],
 					stjl[][]=new JLabel[4][4];
 	
@@ -188,7 +188,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 
 		//保留站
 		resl = new JLabel("保留站");
-		panel4 = new JPanel(new GridLayout(6,7,0,0));
+		panel4 = new JPanel(new GridLayout(6,8,0,0));
 		panel4.setPreferredSize(new Dimension(420, 150));
 		panel4.setBorder(new EtchedBorder(EtchedBorder.RAISED));
 
@@ -346,7 +346,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 //保留站设置
 		for (int i=0;i<6;i++)
 		{
-			for (int j=0;j<8;j++){
+			for (int j=0;j<9;j++){
 				resjl[i][j]=new JLabel(resst[i][j]);
 				resjl[i][j].setBorder(new EtchedBorder(EtchedBorder.RAISED));
 				panel4.add(resjl[i][j]);
@@ -563,6 +563,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 		resst[0][5]="Vk";
 		resst[0][6]="Qj";
 		resst[0][7]="Qk";
+		resst[0][8]="Answer";
 		resst[1][1]="Add1";
 		resst[2][1]="Add2";
 		resst[3][1]="Add3";
@@ -768,7 +769,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 				instjl[i][j].setText(instst[i][j]);
 			}
 		for (int i=0;i<6;i++)
-			for (int j=0;j<8;j++){
+			for (int j=0;j<9;j++){
 				resjl[i][j].setText(resst[i][j]);
 			}
 		for (int i=0;i<4;i++)

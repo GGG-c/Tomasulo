@@ -34,4 +34,5 @@ public class ReservationStation{
 	 */
 	String Busy;
 	
+	String Answer;
 }
