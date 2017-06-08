@@ -24,6 +24,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.border.EtchedBorder;
@@ -48,6 +49,12 @@ import jdk.internal.dynalink.beans.StaticClass;
  */
 
 public class Tomasulo extends JFrame implements ActionListener{
+	
+	private JFrame instf;
+	private JPanel instp;
+	private JTextArea  instinput; 
+	private JButton confirm, cancel;
+	
 	/*
 	 * 界面上有六个面板：
 	 * panel1 : 指令设置        (已设置)
@@ -58,11 +65,12 @@ public class Tomasulo extends JFrame implements ActionListener{
 	 * panel6 : 寄存器状态
 	 */
 	private JPanel panel1,panel2,panel3,panel4,panel5,panel6,panel7,panel8,panel9;
+	
 
 	/*
 	 * 四个操作按钮：步进，进n步，重置，执行
 	 */
-	private JButton stepbut,stepnbut,resetbut,startbut,checkmembut,setmembut;
+	private JButton stepbut,stepnbut,resetbut,startbut,checkmembut,instbut,setmembut;
 
 	/*
 	 * 指令选择框
@@ -80,9 +88,10 @@ public class Tomasulo extends JFrame implements ActionListener{
 	 */
 	private JTextField tt1,tt2,tt3,tt4,tn;
 	private JTextField tmem[] = new JTextField[4];
+	private JLabel datal[] = new JLabel[4];
 	private JTextField smem[] = new JTextField[1];
 	private JTextField data2[] = new JTextField[1];
-	private JLabel datal[] = new JLabel[4];
+	
 
 	private int intv[][]=new int[6][4],instnow=0;
 
@@ -158,7 +167,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 		Container cp=getContentPane();
 		FlowLayout layout=new FlowLayout();
 		cp.setLayout(layout);
-
+		
 		//指令设置。GridLayout(int 指令条数, int 操作码+操作数, int hgap, int vgap)
 		instl = new JLabel("指令设置");
 		panel1 = new JPanel(new GridLayout(6,4,0,0));
@@ -209,10 +218,11 @@ public class Tomasulo extends JFrame implements ActionListener{
 		panel8 = new JPanel(new GridLayout(4,2,0,0));
 		panel8.setPreferredSize(new Dimension(200,100));
 		panel8.setBorder(new EtchedBorder(EtchedBorder.RAISED));
+
 		panel9 = new JPanel(new GridLayout(1,2,0,0));
 		panel9.setPreferredSize(new Dimension(200,100));
 		panel9.setBorder(new EtchedBorder(EtchedBorder.RAISED));
-
+		
 		tl1 = new JLabel("Load/Store");
 		tl2 = new JLabel("加/减");
 		tl3 = new JLabel("乘法");
@@ -234,6 +244,8 @@ public class Tomasulo extends JFrame implements ActionListener{
 		resetbut.addActionListener(this);
 		checkmembut= new JButton("内存查询");
 		checkmembut.addActionListener(this);
+		instbut= new JButton("指令输入");
+		instbut.addActionListener(this);
 		setmembut = new JButton("内存设置");
 		setmembut.addActionListener(this);
 		/*设置执行周期初始值*/
@@ -384,7 +396,8 @@ public class Tomasulo extends JFrame implements ActionListener{
 
 //向容器添加以上部件
 		JPanel area1 = new JPanel();	
-		area1.add(instl);
+		area1.add(instbut);
+		area1.add(instl);		
 		area1.add(panel1);
 		cp.add(area1);
 		
@@ -425,7 +438,6 @@ public class Tomasulo extends JFrame implements ActionListener{
 		area11.add(panel9);
 		cp.add(area11);
 		
-		
 		JPanel area7 = new JPanel();
 		area7.add(resl);
 		area7.add(panel4);
@@ -438,7 +450,28 @@ public class Tomasulo extends JFrame implements ActionListener{
 		area9.add(panel6);
 		cp.add(area9);
 		
-
+		instf = new JFrame("指令输入");
+		instf.setBounds(500, 300, 350, 200);
+		instf.setLayout(null);
+		//instf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		
+		instp = new JPanel();        
+		
+		instinput = new JTextArea(7,10);
+		instinput.setEditable(true);
+		
+		confirm = new JButton("Confirm");
+		confirm.addActionListener(this);
+		cancel = new JButton("Cancel");
+		cancel.addActionListener(this);
+		
+		instp.add(instinput);
+		instp.add(confirm);
+		instp.add(cancel);
+		
+		instf.add(instp);
+		instf.setVisible(false);
+		instf.setContentPane(instp);      //这句加上
 		
 
 		stepbut.setEnabled(false);
@@ -755,14 +788,6 @@ public class Tomasulo extends JFrame implements ActionListener{
 				datal[i].setText("地址超限");
 			}
 		}
-		for (int i=0;i<smem.length;i++){
-			int addr = Integer.parseInt(smem[i].getText());
-			if(addr<4096){
-				data2[i].setText(Integer.toString(mem[addr]));
-			}else{
-				data2[i].setText("地址超限");
-			}
-		}
 		stepsl.setText("当前周期："+String.valueOf(cnow-1));
 	}
 
@@ -774,6 +799,8 @@ public class Tomasulo extends JFrame implements ActionListener{
 			tt1.setEnabled(false);tt2.setEnabled(false);
 			tt3.setEnabled(false);tt4.setEnabled(false);
 			tn.setEnabled(false);
+			instbut.setEnabled(false);
+			instf.setVisible(false);
 			stepbut.setEnabled(true);
 			stepnbut.setEnabled(true);
 			startbut.setEnabled(false);//执行按钮关闭
@@ -808,11 +835,14 @@ public class Tomasulo extends JFrame implements ActionListener{
 			stepbut.setEnabled(false);
 			stepnbut.setEnabled(false);
 			startbut.setEnabled(true);
+			instbut.setEnabled(true);
 			panel3.setVisible(false);
 			insl.setVisible(false);
 			panel4.setVisible(false);
 			ldl.setVisible(false);
 			panel5.setVisible(false);
+			stl.setVisible(false);
+			panel7.setVisible(false);
 			resl.setVisible(false);
 			stepsl.setVisible(false);
 			panel6.setVisible(false);
@@ -820,7 +850,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 			checkmembut.setVisible(false);
 			setmembut.setVisible(false);
 			panel8.setVisible(false);
-			panel9.setVisible(true);
+			panel9.setVisible(false);
 			
 //			temp1=0;
 			init();
@@ -853,19 +883,34 @@ public class Tomasulo extends JFrame implements ActionListener{
 				}
 			}
 		}
+//点击“内存设置”按钮的监听器		
 		if (e.getSource()==setmembut) {
 			for(int i = 0;i<smem.length;i++){
 				int addr = Integer.parseInt(smem[i].getText());
 				int da = Integer.parseInt(data2[i].getText());
 				if(addr<4096){
 					mem[addr] = da;
+					//data2[i].setText("Addr "+ smem[i].getText() + " has changed to " + data2[i].getText());
 				}else{
 					data2[i].setText("地址超限");
 				}
 			}
 		}
-		
-		
+//点击“指令输入”按钮的监听器		
+		if (e.getSource()==instbut) {
+			instf.setVisible(true);
+		}
+//点击“Confirm”按钮的监听器		
+		if (e.getSource()==confirm) {
+			String input = instinput.getText();
+			System.out.printf("%s",input);
+		}
+//点击“Cancel”按钮的监听器	
+		if (e.getSource()==cancel) {
+			instinput.setText("");
+			instf.setVisible(false);
+		}
+			
 
 		for (int i=0;i<24;i=i+4)
 		{
