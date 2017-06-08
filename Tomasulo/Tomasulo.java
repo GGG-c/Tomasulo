@@ -57,12 +57,12 @@ public class Tomasulo extends JFrame implements ActionListener{
 	 * panel5 : Load部件
 	 * panel6 : 寄存器状态
 	 */
-	private JPanel panel1,panel2,panel3,panel4,panel5,panel6,panel7,panel8;
+	private JPanel panel1,panel2,panel3,panel4,panel5,panel6,panel7,panel8,panel9;
 
 	/*
 	 * 四个操作按钮：步进，进n步，重置，执行
 	 */
-	private JButton stepbut,stepnbut,resetbut,startbut,checkmembut;
+	private JButton stepbut,stepnbut,resetbut,startbut,checkmembut,setmembut;
 
 	/*
 	 * 指令选择框
@@ -80,6 +80,8 @@ public class Tomasulo extends JFrame implements ActionListener{
 	 */
 	private JTextField tt1,tt2,tt3,tt4,tn;
 	private JTextField tmem[] = new JTextField[4];
+	private JTextField smem[] = new JTextField[1];
+	private JTextField data2[] = new JTextField[1];
 	private JLabel datal[] = new JLabel[4];
 
 	private int intv[][]=new int[6][4],instnow=0;
@@ -207,6 +209,9 @@ public class Tomasulo extends JFrame implements ActionListener{
 		panel8 = new JPanel(new GridLayout(4,2,0,0));
 		panel8.setPreferredSize(new Dimension(200,100));
 		panel8.setBorder(new EtchedBorder(EtchedBorder.RAISED));
+		panel9 = new JPanel(new GridLayout(1,2,0,0));
+		panel9.setPreferredSize(new Dimension(200,100));
+		panel9.setBorder(new EtchedBorder(EtchedBorder.RAISED));
 
 		tl1 = new JLabel("Load/Store");
 		tl2 = new JLabel("加/减");
@@ -229,6 +234,8 @@ public class Tomasulo extends JFrame implements ActionListener{
 		resetbut.addActionListener(this);
 		checkmembut= new JButton("内存查询");
 		checkmembut.addActionListener(this);
+		setmembut = new JButton("内存设置");
+		setmembut.addActionListener(this);
 		/*设置执行周期初始值*/
 		tt1 = new JTextField("2");
 		tt2 = new JTextField("2");
@@ -368,6 +375,12 @@ public class Tomasulo extends JFrame implements ActionListener{
 			datal[i] = new JLabel(Integer.toString(mem[i]));
 			panel8.add(datal[i]);
 		}
+		for(int i=0; i<smem.length; i++){
+			smem[i] = new JTextField(Integer.toString(i));
+			panel9.add(smem[i]);
+			data2[i] = new JTextField(Integer.toString(mem[i]));
+			panel9.add(data2[i]);
+		}
 
 //向容器添加以上部件
 		JPanel area1 = new JPanel();	
@@ -407,6 +420,12 @@ public class Tomasulo extends JFrame implements ActionListener{
 		area10.add(panel8);
 		cp.add(area10);
 		
+		JPanel area11 = new JPanel();
+		area11.add(setmembut);
+		area11.add(panel9);
+		cp.add(area11);
+		
+		
 		JPanel area7 = new JPanel();
 		area7.add(resl);
 		area7.add(panel4);
@@ -436,7 +455,9 @@ public class Tomasulo extends JFrame implements ActionListener{
 		panel6.setVisible(false);
 		regl.setVisible(false);
 		checkmembut.setVisible(false);
+		setmembut.setVisible(false);
 		panel8.setVisible(false);
+		panel9.setVisible(false);
 		setSize(860,820);
 		setVisible(true);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -734,6 +755,14 @@ public class Tomasulo extends JFrame implements ActionListener{
 				datal[i].setText("地址超限");
 			}
 		}
+		for (int i=0;i<smem.length;i++){
+			int addr = Integer.parseInt(smem[i].getText());
+			if(addr<4096){
+				data2[i].setText(Integer.toString(mem[addr]));
+			}else{
+				data2[i].setText("地址超限");
+			}
+		}
 		stepsl.setText("当前周期："+String.valueOf(cnow-1));
 	}
 
@@ -759,6 +788,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 			panel6.setVisible(true);
 			panel7.setVisible(true);
 			panel8.setVisible(true);
+			panel9.setVisible(true);
 			insl.setVisible(true);
 			ldl.setVisible(true);
 			stl.setVisible(true);
@@ -766,6 +796,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 			stepsl.setVisible(true);
 			regl.setVisible(true);
 			checkmembut.setVisible(true);
+			setmembut.setVisible(true);
 		}
 //点击“重置”按钮的监听器
 		if (e.getSource()==resetbut) {
@@ -787,7 +818,9 @@ public class Tomasulo extends JFrame implements ActionListener{
 			panel6.setVisible(false);
 			regl.setVisible(false);
 			checkmembut.setVisible(false);
+			setmembut.setVisible(false);
 			panel8.setVisible(false);
+			panel9.setVisible(true);
 			
 //			temp1=0;
 			init();
@@ -820,6 +853,19 @@ public class Tomasulo extends JFrame implements ActionListener{
 				}
 			}
 		}
+		if (e.getSource()==setmembut) {
+			for(int i = 0;i<smem.length;i++){
+				int addr = Integer.parseInt(smem[i].getText());
+				int da = Integer.parseInt(data2[i].getText());
+				if(addr<4096){
+					mem[addr] = da;
+				}else{
+					data2[i].setText("地址超限");
+				}
+			}
+		}
+		
+		
 
 		for (int i=0;i<24;i=i+4)
 		{
