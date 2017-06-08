@@ -1,9 +1,5 @@
-/**
- * Loadª∫¥Ê’æ
- * @author caoxin
- *
- */
-public class LoadStation{
+
+public class LoadStoreStation{
 	/**
 	 * ±£¡Ù’æ√˚≥∆
 	 */

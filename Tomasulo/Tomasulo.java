@@ -150,8 +150,8 @@ public class Tomasulo extends JFrame implements ActionListener{
 	private Instruction instruction[] = new Instruction[6];
 	private InstructionStation IS[] = new InstructionStation[6];
 	private ReservationStation RS[] = new ReservationStation[5];
-	private LoadStation LS[] = new LoadStation[3];
-	private LoadStation SS[] = new LoadStation[3];
+	private LoadStoreStation LS[] = new LoadStoreStation[3];
+	private LoadStoreStation SS[] = new LoadStoreStation[3];
 	private RegisterStation RegS[] = new RegisterStation[16];
 	/*
 	 * 初始化内存
@@ -698,7 +698,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 	}
 	for(int i=0;i<3;i++)
 	{
-		LS[i]=new LoadStation();
+		LS[i]=new LoadStoreStation();
 		LS[i].Qi=ldst[i+1][0];
 		LS[i].Busy=ldst[i+1][1];
 		LS[i].Addr=ldst[i+1][2];
@@ -706,7 +706,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 	}
 	for(int i=0;i<3;i++)
 	{
-		SS[i]=new LoadStation();
+		SS[i]=new LoadStoreStation();
 		SS[i].Qi=stst[i+1][0];
 		SS[i].Busy=stst[i+1][1];
 		SS[i].Addr=stst[i+1][2];
@@ -1069,6 +1069,10 @@ public class Tomasulo extends JFrame implements ActionListener{
 	    		}
 	    		
 	    	}
+	    	else if(instrsn.instruction.name=="ST.D")
+	    	{
+	    		
+	    	}
 	    	/**
 	    	 * 当前指令为运算类指令时
 	    	 */
@@ -1263,7 +1267,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 	    			{
 	    				if(LS[j].Qi==instrnsex2.Qi)
 	    				{
-	    					LS[j].value="M["+LS[j].Addr+"]";
+	    					LS[j].value=Float.toString(mem[Integer.valueOf(LS[j].value).intValue()]);
 	    					ldst[j+1][3]=LS[j].value;
 	    					instrnsex2.excutetime--;
 	    					break;
@@ -1285,6 +1289,25 @@ public class Tomasulo extends JFrame implements ActionListener{
 						if(RS[j].Qi==instrnsex2.Qi)
 						{
 						    instrnsex2.excutetime--;
+						    if(instrnsex2.instruction.name == "ADD.D")
+						    {
+						    	RS[j].Answer = Float.toString(Float.parseFloat(RS[j].Vj)+Float.parseFloat(RS[j].Vk)); 
+						    }
+						    else if(instrnsex2.instruction.name == "SUB.D")
+						    {
+						    	RS[j].Answer = Float.toString(Float.parseFloat(RS[j].Vj)-Float.parseFloat(RS[j].Vk)); 
+						    }
+						    else if(instrnsex2.instruction.name == "MULT.D")
+						    {
+						    	System.out.printf("j = %d",j);
+						    	RS[j].Answer = Float.toString(Float.parseFloat(RS[j].Vj)*Float.parseFloat(RS[j].Vk)); 
+						    }
+						    else if(instrnsex2.instruction.name == "DIV.D")
+						    {
+						    	RS[j].Answer = Float.toString(Float.parseFloat(RS[j].Vj)/Float.parseFloat(RS[j].Vk)); 
+						    }
+						    resst[j+1][8] = RS[j].Answer;
+						    
 							resst[j+1][0]=String.valueOf(instrnsex2.excutetime);
 							break;
 						}
@@ -1308,6 +1331,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 	    	{
 	    		InstructionStation instrnswb=IS[num_wb[i]];
 	    		String Qi4=instrnswb.Qi;
+	    		String ret = new String ();
 	    		/**
 	    		 * 指令为load指令时，写回，取消对load缓存站相应站位的占用
 	    		 */
@@ -1319,6 +1343,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 	    				{
 	    					LS[j].Busy="no";
 	    					LS[j].Addr="";
+	    					ret = LS[j].value;
 	    					LS[j].value="";
 	    					ldst[j+1][1]=LS[j].Busy;
 	    					ldst[j+1][2]=LS[j].Addr;
@@ -1335,14 +1360,16 @@ public class Tomasulo extends JFrame implements ActionListener{
 					{
 						if(RS[j].Qi==Qi4)
 						{
+							ret = RS[j].Answer;
 							RS[j].Busy="no";
 							RS[j].Op="";
 							RS[j].Qj="";
 							RS[j].Qk="";
 							RS[j].Vj="";
 							RS[j].Vk="";
+							RS[j].Answer = "";
 							resst[j+1][2]=RS[j].Busy;
-							for(int k=3;k<8;k++)
+							for(int k=3;k<9;k++)
 								resst[j+1][k]="";	
 							break;
 						}
@@ -1356,7 +1383,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 	    			if(RegS[j].Qi==Qi4)
 	    			{
 	    				m++;
-	    				RegS[j].value="M"+m;
+	    				RegS[j].value=ret;
 	    				regst[2][j+1]=RegS[j].value;
 	    			}
 	    		}
@@ -1367,7 +1394,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 	    		{
 	    			if(RS[j].Qj==Qi4)
 	    			{
-	    				RS[j].Vj="M"+m;
+	    				RS[j].Vj=ret;
 	    				RS[j].Qj="";
 	    				resst[j+1][4]=RS[j].Vj;
 	    				resst[j+1][6]=RS[j].Qj;
@@ -1375,7 +1402,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 	    			}
 	    			if(RS[j].Qk==Qi4)
 	    			{
-	    				RS[j].Vk="M"+m;
+	    				RS[j].Vk=ret;
 	    				RS[j].Qk="";
 	    				resst[j+1][5]=RS[j].Vk;
 	    				resst[j+1][7]=RS[j].Qk;
@@ -1407,11 +1434,23 @@ public class Tomasulo extends JFrame implements ActionListener{
      * @param LS
      * @return
      */
-	private int IDLE_load(LoadStation LS[]){
+	private int IDLE_load(LoadStoreStation LS[]){
 		int num_idld=-1;
 		for(int i=0;i<LS.length;i++)
 		{
 			if(LS[i].Busy=="no")
+			{
+				num_idld=i;
+				break;
+			}
+		}
+		return num_idld;
+	}
+	private int IDLE_store(LoadStoreStation SS[]){
+		int num_idld=-1;
+		for(int i=0;i<SS.length;i++)
+		{
+			if(SS[i].Busy=="no")
 			{
 				num_idld=i;
 				break;
