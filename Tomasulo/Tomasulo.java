@@ -906,7 +906,100 @@ public class Tomasulo extends JFrame implements ActionListener{
 //点击“Confirm”按钮的监听器		
 		if (e.getSource()==confirm) {
 			String input = instinput.getText();
-			System.out.printf("%s",input);
+			String[] ss = input.split("\n");
+			//System.out.printf("%s", ss.length);
+			int a1;
+			if(ss.length <= 5){
+				for(int i = 0;i < ss.length;i++){
+					String[] arr = ss[i].split(" ");
+					//System.out.printf("%s", arr[2]);
+					for( a1=0;a1<=6; a1++){
+						if(arr[0].equals(inst[a1])){
+							//System.out.printf("%s", a1);
+							instbox[4*i].setSelectedIndex(a1);
+						}
+					}
+					for(int a2=0;a2<=10; a2++){
+						if(arr[1].equals(fx[a2])){
+							//System.out.printf("%s", a2);
+							instbox[4*i+1].setSelectedIndex(a2);
+						}
+					}
+					if (instbox[4*i].getSelectedIndex()==INST_LD || instbox[4*i].getSelectedIndex()==INST_ST){
+						for(int a3=0;a3<=25; a3++){
+							if(arr[2].equals(ix[a3])){
+								System.out.printf("%s", a3);
+								instbox[4*i+2].setSelectedIndex(a3);
+							}
+						}
+						for(int a4=0;a4<=10; a4++){
+							if(arr[3].equals(rx[a4])){
+								//System.out.printf("%s", a4);
+								instbox[4*i+3].setSelectedIndex(a4);
+							}
+						}
+					}
+					else{
+						for(int a3=0;a3<=10; a3++){
+							if(arr[2].equals(fx[a3])){
+								//System.out.printf("%s", a3);
+								instbox[4*i+2].setSelectedIndex(a3);
+							}
+						}
+						for(int a4=0;a4<=10; a4++){
+							if(arr[3].equals(fx[a4])){
+								//System.out.printf("%s", a4);
+								instbox[4*i+3].setSelectedIndex(a4);
+							}
+						}
+					}
+				}
+				for(int k = ss.length;k<=5;k++){
+					instbox[4*k].setSelectedIndex(0);
+					instbox[4*k+1].setSelectedIndex(0);
+					instbox[4*k+2].setSelectedIndex(0);
+					instbox[4*k+3].setSelectedIndex(0);
+				}
+			}
+			if(ss.length >5){
+				for(int i = 0;i < 6;i++){
+					String[] arr = ss[i].split(" ");
+					for( a1=0;a1<=6; a1++){
+						if(arr[0].equals(inst[a1])){
+							instbox[4*i].setSelectedIndex(a1);
+						}
+					}
+					for(int a2=0;a2<=10; a2++){
+						if(arr[1].equals(fx[a2])){
+							instbox[4*i+1].setSelectedIndex(a2);
+						}
+					}
+					if (instbox[4*i].getSelectedIndex()==INST_LD || instbox[4*i].getSelectedIndex()==INST_ST){
+						for(int a3=0;a3<=25; a3++){
+							if(arr[2].equals(ix[a3])){
+								instbox[4*i+2].setSelectedIndex(a3);
+							}
+						}
+						for(int a4=0;a4<=10; a4++){
+							if(arr[3].equals(rx[a4])){
+								instbox[4*i+3].setSelectedIndex(a4);
+							}
+						}
+					}
+					else{
+						for(int a3=0;a3<=10; a3++){
+							if(arr[2].equals(fx[a3])){
+								instbox[4*i+2].setSelectedIndex(a3);
+							}
+						}
+						for(int a4=0;a4<=10; a4++){
+							if(arr[3].equals(fx[a4])){
+								instbox[4*i+3].setSelectedIndex(a4);
+							}
+						}
+					}
+				}
+			}
 		}
 //点击“Cancel”按钮的监听器	
 		if (e.getSource()==cancel) {
