@@ -98,7 +98,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 	int cnow;
 	private int cal[][]={{-1,0,0},{-1,0,0},{-1,0,0},{-1,0,0},{-1,0,0}};
 	private int ld[][]={{0,0},{0,0},{0,0}};
-	private int ff[]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+	private int ff[]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 	/*
 	 * (1)说明：根据你的设计完善指令设置中的下拉框内容
@@ -131,17 +131,17 @@ public class Tomasulo extends JFrame implements ActionListener{
 	/*instst：指令状态列表(7行4列) 
 	 *resst：保留站列表(6行8列) 
 	 *ldst：load缓存列表(4行4列) 
-	 *regst：寄存器列表(3行17列) 
+	 *regst：寄存器列表(3行23列) 
 	 * */
 	private	String  instst[][]=new String[7][4], resst[][]=new String[6][8],
-					ldst[][]=new String[4][4], regst[][]=new String[3][17],
+					ldst[][]=new String[4][4], regst[][]=new String[3][23],
 					stst[][]=new String[4][4];
 	private String  culinstst[][]=new String[7][4], culresst[][]=new String[6][8],
-			        culldst[][]=new String[4][4], culregst[][]=new String[3][17],
+			        culldst[][]=new String[4][4], culregst[][]=new String[3][23],
 			        culstst[][]=new String[4][4];
 	/*将以上String值加入到列表框中*/
 	private	JLabel  instjl[][]=new JLabel[7][4], resjl[][]=new JLabel[6][8],
-					ldjl[][]=new JLabel[4][4], regjl[][]=new JLabel[3][17],
+					ldjl[][]=new JLabel[4][4], regjl[][]=new JLabel[3][23],
 					stjl[][]=new JLabel[4][4];
 	
 	/**
@@ -156,7 +156,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 	/*
 	 * 初始化内存
 	 */
-	private int mem[] = new int[4096];
+	private float mem[] = new float[4096];
 	
 
 //构造方法
@@ -206,7 +206,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 
 		//寄存器状态
 		regl = new JLabel("寄存器");
-		panel6 = new JPanel(new GridLayout(3,17,0,0));
+		panel6 = new JPanel(new GridLayout(3,23,0,0));
 		panel6.setPreferredSize(new Dimension(740, 75));
 		panel6.setBorder(new EtchedBorder(EtchedBorder.RAISED));
 		
@@ -373,7 +373,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 //寄存器设置
 		for (int i=0;i<3;i++)
 		{
-			for (int j=0;j<17;j++){
+			for (int j=0;j<23;j++){
 				regjl[i][j]=new JLabel(regst[i][j]);
 				regjl[i][j].setBorder(new EtchedBorder(EtchedBorder.RAISED));
 				panel6.add(regjl[i][j]);
@@ -384,13 +384,13 @@ public class Tomasulo extends JFrame implements ActionListener{
 		for(int i=0; i<tmem.length; i++){
 			tmem[i] = new JTextField(Integer.toString(i));
 			panel8.add(tmem[i]);
-			datal[i] = new JLabel(Integer.toString(mem[i]));
+			datal[i] = new JLabel(Float.toString(mem[i]));
 			panel8.add(datal[i]);
 		}
 		for(int i=0; i<smem.length; i++){
 			smem[i] = new JTextField(Integer.toString(i));
 			panel9.add(smem[i]);
-			data2[i] = new JTextField(Integer.toString(mem[i]));
+			data2[i] = new JTextField(Float.toString(mem[i]));
 			panel9.add(data2[i]);
 		}
 
@@ -575,10 +575,13 @@ public class Tomasulo extends JFrame implements ActionListener{
 		resst[5][2]="no";
 
 		regst[0][0]="寄存器号";
-		for (int i=1;i<fx.length;i++){
+		for (int i=1;i<=fx.length;i++){
 			//System.out.print(i+" "+fx[i-1];
 			regst[0][i]=fx[i-1];
 
+		}
+		for (int i=1;i<=rx.length;i++){
+			regst[0][i+fx.length] = rx[i-1];
 		}
 		regst[1][0]="表达式";
 		regst[2][0]="数据";
@@ -662,7 +665,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 			stst[i][j]="";
 		}
 		for (int i=1;i<3;i++)
-		for (int j=1;j<17;j++){
+		for (int j=1;j<23;j++){
 			regst[i][j]="";
 		}
 		instnow=0;
@@ -674,7 +677,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 		for (int i=0;i<3;i++)
 			for (int j=0;j<2;j++) ld[i][j]=0;
 		/*ff可对regst进行写操作*/
-		for (int i=0;i<17;i++) ff[i]=0;
+		for (int i=0;i<23;i++) ff[i]=0;
 	
 	
 	/**
@@ -777,13 +780,13 @@ public class Tomasulo extends JFrame implements ActionListener{
 				stjl[i][j].setText(stst[i][j]);
 			}
 		for (int i=0;i<3;i++)
-			for (int j=0;j<17;j++){
+			for (int j=0;j<23;j++){
 				regjl[i][j].setText(regst[i][j]);
 			}
 		for (int i=0;i<tmem.length;i++){
 			int addr = Integer.parseInt(tmem[i].getText());
 			if(addr<4096){
-				datal[i].setText(Integer.toString(mem[addr]));
+				datal[i].setText(Float.toString(mem[addr]));
 			}else{
 				datal[i].setText("地址超限");
 			}
@@ -877,7 +880,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 			for(int i = 0;i<tmem.length;i++){
 				int addr = Integer.parseInt(tmem[i].getText());
 				if(addr<4096){
-					datal[i].setText(Integer.toString(mem[addr]));
+					datal[i].setText(Float.toString(mem[addr]));
 				}else{
 					datal[i].setText("地址超限");
 				}
@@ -887,7 +890,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 		if (e.getSource()==setmembut) {
 			for(int i = 0;i<smem.length;i++){
 				int addr = Integer.parseInt(smem[i].getText());
-				int da = Integer.parseInt(data2[i].getText());
+				float da = Float.parseFloat(data2[i].getText());
 				if(addr<4096){
 					mem[addr] = da;
 					//data2[i].setText("Addr "+ smem[i].getText() + " has changed to " + data2[i].getText());
