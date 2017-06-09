@@ -1014,7 +1014,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 	*/
 	
 	public void core(){
-		send_out_inst();
+		
 		for(int i=0; i<IS.length;i++){
 			if(IS[i].out && !IS[i].wb){
 				if(checkrs(IS[i].Qi)){
@@ -1029,6 +1029,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 				}
 			}
 		}
+		send_out_inst();
 //		for(int i=0;i<3;i++){
 //			System.out.printf("%d ",load_queue[i]);
 //			System.out.printf("%d \n",store_queue[i]);
@@ -1076,6 +1077,13 @@ public class Tomasulo extends JFrame implements ActionListener{
 		for(int i =0; i<SS.length;i++){
 			if(SS[i].value.equals(Q)){
 				SS[i].value = value;
+				SS[i].ready = true;
+			}
+		}
+		for(int i =0; i<LS.length;i++){
+			if(LS[i].value.equals(Q)){
+				LS[i].value = value;
+				LS[i].ready = true;
 			}
 		}
 		for(int i =0; i<RS.length;i++){
@@ -1255,11 +1263,11 @@ public class Tomasulo extends JFrame implements ActionListener{
 							}
 						}
 						if(RegS[regi].Qi == ""){//数据准备好了
-							RegS[regi].Qi = "Load" + Integer.toString(i+1);	
 							LS[i].ready = true;
-						}else{//数据没准备好
+						}else{//数据没准备好							
 							LS[i].value = RegS[regi].Qi;						
 						}
+						RegS[regi].Qi = "Load" + Integer.toString(i+1);	
 						break;
 					}
 				}
