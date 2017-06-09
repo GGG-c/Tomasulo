@@ -1,8 +1,4 @@
-/**
- * 指令状态集
- * @author caoxin
- *
- */
+
 public class InstructionStation{
 	/**
 	 * 当前指令所在保留站名称
@@ -20,4 +16,7 @@ public class InstructionStation{
 	 * 该指令状态所对应的指令
 	 */
 	Instruction instruction;
+	
+	boolean out,exec,wb;
+	
 }

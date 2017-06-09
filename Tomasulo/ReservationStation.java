@@ -1,10 +1,5 @@
-/**
- * 保留站
- * @author caoxin
- *
- */
-public class ReservationStation{
-	
+
+public class ReservationStation{	
 	/**
 	 * 设置Qi便于对寄存器Qi进行赋值，Qi为该保留站的名称，用以告知指定寄存器结果来源
 	 * */
@@ -33,6 +28,8 @@ public class ReservationStation{
 	 * 保留站工作状态
 	 */
 	String Busy;
-	
+	/**
+	 * 保留站结果
+	 */
 	String Answer;
 }

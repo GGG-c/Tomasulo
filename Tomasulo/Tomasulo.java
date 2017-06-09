@@ -1,6 +1,4 @@
-﻿//请根据你的包路径修改
-//package ustc.qyq;
-
+﻿
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.Dimension;
@@ -36,17 +34,7 @@ import com.sun.org.apache.xml.internal.resolver.helpers.PublicId;
 
 import jdk.internal.dynalink.beans.StaticClass;
 
-/**
- * @author yanqing.qyq 2012-2015@USTC
- * 模板说明：该模板主要提供依赖Swing组件提供的JPanle，JFrame，JButton等提供的GUI。使用“监听器”模式监听各个Button的事件，从而根据具体事件执行不同方法。
- * Tomasulo算法核心需同学们自行完成，见说明（4）
- * 对于界面必须修改部分，见说明(1),(2),(3)
- *
- *  (1)说明：根据你的设计完善指令设置中的下拉框内容
- *	(2)说明：请根据你的设计指定各个面板（指令状态，保留站，Load部件，寄存器部件）的大小
- *	(3)说明：设置界面默认指令
- *	(4)说明： Tomasulo算法实现
- */
+
 
 public class Tomasulo extends JFrame implements ActionListener{
 	
@@ -63,12 +51,15 @@ public class Tomasulo extends JFrame implements ActionListener{
 	 * panel4 : 保留站状态
 	 * panel5 : Load部件
 	 * panel6 : 寄存器状态
+	 * panel7 : Store部件
+	 * panel8 : 内存查询
+	 * panel9 : 内存设置
 	 */
 	private JPanel panel1,panel2,panel3,panel4,panel5,panel6,panel7,panel8,panel9;
 	
 
 	/*
-	 * 四个操作按钮：步进，进n步，重置，执行
+	 * 七个操作按钮：步进，进n步，重置，执行，内存查询，指令输入，内存设置
 	 */
 	private JButton stepbut,stepnbut,resetbut,startbut,checkmembut,instbut,setmembut;
 
@@ -102,8 +93,8 @@ public class Tomasulo extends JFrame implements ActionListener{
 
 	/*
 	 * (1)说明：根据你的设计完善指令设置中的下拉框内容
-	 * inst： 指令下拉框内容:"NOP","L.D","ADD.D","SUB.D","MULT.D","DIV.D"…………
-	 * fx：       目的寄存器下拉框内容:"F0","F2","F4","F6","F8" …………
+	 * inst： 指令下拉框内容:"NOP","L.D","ADD.D","SUB.D","MULT.D","DIV.D","ST.D"…………
+	 * fx：     浮点数寄存器下拉框内容:"F0","F1","F2","F3","F4" …………
 	 * rx：       源操作数寄存器内容:"R0","R1","R2","R3","R4","R5","R6","R7","R8","R9" …………
 	 * ix：       立即数下拉框内容:"0","1","2","3","4","5","6","7","8","9" …………
 	 */
@@ -120,28 +111,22 @@ public class Tomasulo extends JFrame implements ActionListener{
 	private static final int INST_DIV = INST_MULT + 1;
 	private static final int INST_ST = INST_DIV + 1;
 	
-	/*
-	 * (2)说明：请根据你的设计指定各个面板（指令状态，保留站，Load部件，寄存器部件）的大小
-	 * 		指令状态 面板
-	 * 		保留站 面板
-	 * 		Load部件 面板
-	 * 		寄存器 面板
-	 * 					的大小 
-	 */
+
 	/*instst：指令状态列表(7行4列) 
 	 *resst：保留站列表(6行8列) 
 	 *ldst：load缓存列表(4行4列) 
 	 *regst：寄存器列表(3行23列) 
+	 *stst：store缓存列表(4行4列)
 	 * */
 	private	String  instst[][]=new String[7][4], resst[][]=new String[6][9],
-					ldst[][]=new String[4][4], regst[][]=new String[3][23],
+					ldst[][]=new String[4][4], regst[][]=new String[3][12],
 					stst[][]=new String[4][4];
 	private String  culinstst[][]=new String[7][4], culresst[][]=new String[6][9],
-			        culldst[][]=new String[4][4], culregst[][]=new String[3][23],
+			        culldst[][]=new String[4][4], culregst[][]=new String[3][12],
 			        culstst[][]=new String[4][4];
 	/*将以上String值加入到列表框中*/
 	private	JLabel  instjl[][]=new JLabel[7][4], resjl[][]=new JLabel[6][9],
-					ldjl[][]=new JLabel[4][4], regjl[][]=new JLabel[3][23],
+					ldjl[][]=new JLabel[4][4], regjl[][]=new JLabel[3][12],
 					stjl[][]=new JLabel[4][4];
 	
 	/**
@@ -152,7 +137,10 @@ public class Tomasulo extends JFrame implements ActionListener{
 	private ReservationStation RS[] = new ReservationStation[5];
 	private LoadStoreStation LS[] = new LoadStoreStation[3];
 	private LoadStoreStation SS[] = new LoadStoreStation[3];
-	private RegisterStation RegS[] = new RegisterStation[16];
+	private RegisterStation RegS[] = new RegisterStation[11];
+	
+	private int load_lock,store_lock;
+	
 	/*
 	 * 初始化内存
 	 */
@@ -168,13 +156,13 @@ public class Tomasulo extends JFrame implements ActionListener{
 		FlowLayout layout=new FlowLayout();
 		cp.setLayout(layout);
 		
-		//指令设置。GridLayout(int 指令条数, int 操作码+操作数, int hgap, int vgap)
+		//指令设置。
 		instl = new JLabel("指令设置");
 		panel1 = new JPanel(new GridLayout(6,4,0,0));
 		panel1.setPreferredSize(new Dimension(350, 150));
 		panel1.setBorder(new EtchedBorder(EtchedBorder.RAISED));
 
-		//操作按钮:执行，重设，步进，步进n步
+		//参数设置
 		timel = new JLabel("参数设置");
 		panel2 = new JPanel(new GridLayout(3,4,0,0));
 		panel2.setPreferredSize(new Dimension(280, 80));
@@ -206,7 +194,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 
 		//寄存器状态
 		regl = new JLabel("寄存器");
-		panel6 = new JPanel(new GridLayout(3,23,0,0));
+		panel6 = new JPanel(new GridLayout(3,12,0,0));
 		panel6.setPreferredSize(new Dimension(740, 75));
 		panel6.setBorder(new EtchedBorder(EtchedBorder.RAISED));
 		
@@ -291,32 +279,32 @@ public class Tomasulo extends JFrame implements ActionListener{
 		 * (3)说明：设置界面默认指令，根据你设计的指令，操作数等的选择范围进行设置。
 		 * 默认6条指令。待修改
 		 */
-		/*L.D F6,21(R2)*/
+		/*L.D F3,21(R2)*/
 		instbox[0].setSelectedIndex(1);
 		instbox[1].setSelectedIndex(3);
 		instbox[2].setSelectedIndex(21);
 		instbox[3].setSelectedIndex(2);
-        /*L.D F2,20(R3)*/
+        /*L.D F1,20(R3)*/
 		instbox[4].setSelectedIndex(1);
 		instbox[5].setSelectedIndex(1);
 		instbox[6].setSelectedIndex(20);
 		instbox[7].setSelectedIndex(3);
-        /*MUL.D F0,F2,F4*/
+        /*MUL.D F0,F1,F2*/
 		instbox[8].setSelectedIndex(4);
 		instbox[9].setSelectedIndex(0);
 		instbox[10].setSelectedIndex(1);
 		instbox[11].setSelectedIndex(2);
-        /*SUB.D F8,F6,F2*/
+        /*SUB.D F4,F3,F1*/
 		instbox[12].setSelectedIndex(3);
 		instbox[13].setSelectedIndex(4);
 		instbox[14].setSelectedIndex(3);
 		instbox[15].setSelectedIndex(1);
-        /*DIV.D F10,F0,F6*/
+        /*DIV.D F5,F0,F3*/
 		instbox[16].setSelectedIndex(5);
 		instbox[17].setSelectedIndex(5);
 		instbox[18].setSelectedIndex(0);
 		instbox[19].setSelectedIndex(3);
-        /*ADD.D F6,F8,F2*/
+        /*ADD.D F3,F4,F1*/
 		instbox[20].setSelectedIndex(2);
 		instbox[21].setSelectedIndex(3);
 		instbox[22].setSelectedIndex(4);
@@ -373,7 +361,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 //寄存器设置
 		for (int i=0;i<3;i++)
 		{
-			for (int j=0;j<23;j++){
+			for (int j=0;j<12;j++){
 				regjl[i][j]=new JLabel(regst[i][j]);
 				regjl[i][j].setBorder(new EtchedBorder(EtchedBorder.RAISED));
 				panel6.add(regjl[i][j]);
@@ -500,12 +488,13 @@ public class Tomasulo extends JFrame implements ActionListener{
  * 点击”执行“按钮后，根据选择的指令，初始化其他几个面板
  */
 	public void init(){
-		// get value
+		load_lock = 0;
+		store_lock = 0;
 		/*intv：6行4列的整型数组*/
 		for (int i=0;i<6;i++){
 			intv[i][0]=instbox[i*4].getSelectedIndex();
 			if (intv[i][0]!=0){
-				intv[i][1]=2*instbox[i*4+1].getSelectedIndex();//TODO:why * 2
+				intv[i][1]=instbox[i*4+1].getSelectedIndex();
 				/*指令形式为load/Store时，选择列表为fx,ix,rx*/
 				if (intv[i][0]==INST_LD || intv[i][0]==INST_ST){
 					intv[i][2]=instbox[i*4+2].getSelectedIndex();
@@ -513,8 +502,8 @@ public class Tomasulo extends JFrame implements ActionListener{
 				}
 				/*指令形式为算术运算指令时，选择列表为fx,fx,fx*/
 				else {
-					intv[i][2]=2*instbox[i*4+2].getSelectedIndex();
-					intv[i][3]=2*instbox[i*4+3].getSelectedIndex();
+					intv[i][2]=instbox[i*4+2].getSelectedIndex();
+					intv[i][3]=instbox[i*4+3].getSelectedIndex();
 				}
 			}
 		}
@@ -564,11 +553,11 @@ public class Tomasulo extends JFrame implements ActionListener{
 		resst[0][6]="Qj";
 		resst[0][7]="Qk";
 		resst[0][8]="Answer";
-		resst[1][1]="Add1";
-		resst[2][1]="Add2";
-		resst[3][1]="Add3";
-		resst[4][1]="Mult1";
-		resst[5][1]="Mult2";
+		resst[1][1]="ADD1";
+		resst[2][1]="ADD2";
+		resst[3][1]="ADD3";
+		resst[4][1]="MULT1";
+		resst[5][1]="MULT2";
 		resst[1][2]="no";
 		resst[2][2]="no";
 		resst[3][2]="no";
@@ -577,12 +566,8 @@ public class Tomasulo extends JFrame implements ActionListener{
 
 		regst[0][0]="寄存器号";
 		for (int i=1;i<=fx.length;i++){
-			//System.out.print(i+" "+fx[i-1];
 			regst[0][i]=fx[i-1];
 
-		}
-		for (int i=1;i<=rx.length;i++){
-			regst[0][i+fx.length] = rx[i-1];
 		}
 		regst[1][0]="表达式";
 		regst[2][0]="数据";
@@ -641,19 +626,12 @@ public class Tomasulo extends JFrame implements ActionListener{
 		IS[i-1].state=0;
 		IS[i-1].instruction=instruction[i-1];
 		IS[i-1].excutetime=getTimeForEX(instruction[i-1]);
+		IS[i-1].out = false; IS[i-1].exec = false; IS[i-1].wb = false;
 	}
 		
-		/**
-		 * test 输出六条指令
-		 */
-/*		for(int i=0;i<6;i++)
-		{
-		    System.out.println(instruction[i]);
-		}
-		*/
 		
 		for (int i=1;i<6;i++)
-		for (int j=0;j<8;j++)
+		for (int j=0;j<9;j++)
 			if (j!=1&&j!=2){
 			resst[i][j]="";
 		}
@@ -666,8 +644,9 @@ public class Tomasulo extends JFrame implements ActionListener{
 			stst[i][j]="";
 		}
 		for (int i=1;i<3;i++)
-		for (int j=1;j<23;j++){
+		for (int j=1;j<12;j++){
 			regst[i][j]="";
+			regst[2][j]="0.0";
 		}
 		instnow=0;
 		for (int i=0;i<5;i++){
@@ -678,7 +657,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 		for (int i=0;i<3;i++)
 			for (int j=0;j<2;j++) ld[i][j]=0;
 		/*ff可对regst进行写操作*/
-		for (int i=0;i<23;i++) ff[i]=0;
+		for (int i=0;i<12;i++) ff[i]=0;
 	
 	
 	/**
@@ -694,6 +673,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 		RS[i].Vk=resst[i+1][5];
 		RS[i].Qj=resst[i+1][6];
 		RS[i].Qk=resst[i+1][7];
+		RS[i].Answer = resst[i+1][8];
 //		System.out.print(RS[i].Qi);
 	}
 	for(int i=0;i<3;i++)
@@ -703,6 +683,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 		LS[i].Busy=ldst[i+1][1];
 		LS[i].Addr=ldst[i+1][2];
 		LS[i].value=ldst[i+1][3];
+		LS[i].ready = false;
 	}
 	for(int i=0;i<3;i++)
 	{
@@ -711,26 +692,15 @@ public class Tomasulo extends JFrame implements ActionListener{
 		SS[i].Busy=stst[i+1][1];
 		SS[i].Addr=stst[i+1][2];
 		SS[i].value=stst[i+1][3];
+		SS[i].ready = false;
 	}
-	for(int i=0;i<16;i++)
+	for(int i=0;i<11;i++)
 	{
 		RegS[i]=new RegisterStation();
 		RegS[i].state=regst[0][i+1];
 		RegS[i].Qi=regst[1][i+1];
 		RegS[i].value=regst[2][i+1];
 	}
-	/**
-	 * 将指令状态集与指令队列中指令相互关联
-	 */
-	/*
-	for(int i=0;i<6;i++)
-	{
-		IS[i]=new InstructionStation();
-		IS[i].state=0;
-		IS[i].instruction=instruction[i];
-		IS[i].excutetime=getTimeForEX(instruction[i]);
-	}
-	*/
 	
 	}
 	
@@ -781,7 +751,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 				stjl[i][j].setText(stst[i][j]);
 			}
 		for (int i=0;i<3;i++)
-			for (int j=0;j<23;j++){
+			for (int j=0;j<12;j++){
 				regjl[i][j].setText(regst[i][j]);
 			}
 		for (int i=0;i<tmem.length;i++){
@@ -1036,574 +1006,267 @@ public class Tomasulo extends JFrame implements ActionListener{
 	{	
 	}
 	*/
-//	static int temp1=0;
-//	static int ld_current=0;
 	
-	public void core()
-	{
-	    int num_issue,num_ex1[],num_ex2[],num_wb[];
-	    num_issue=this.IS_getstate(IS);
-	    num_ex1=this.EX1_getstate(IS);
-	    num_ex2=this.EX2_getstate(IS);
-	    num_wb=this.WB_getstate(IS);
-	    /**
-	     * 发射指令：state置1(执行条件为原值等于0，即指令队列中的等待状态)
-	     */
-	    if(num_issue!=-1)
-	    {
-	    	InstructionStation instrsn=IS[num_issue];
-	    	/**
-	    	 * 当前指令为Load指令时
-	    	 */
-	    	if(instrsn.instruction.name=="L.D")
-	    	{
-	    		int num_idld;
-	    		num_idld=this.IDLE_load(LS);
-	    		if(num_idld!=-1)
-	    		{
-	    			instrsn.Qi=LS[num_idld].Qi;
-	    			LS[num_idld].Busy="yes";
-	    			ldst[num_idld+1][1]=LS[num_idld].Busy;
-	    			LS[num_idld].value=instrsn.instruction.opr2;
-	    			ldst[num_idld+1][3]=LS[num_idld].value;
-	    		}
-	    		
-	    	}
-	    	else if(instrsn.instruction.name=="ST.D")
-	    	{
-	    		
-	    	}
-	    	/**
-	    	 * 当前指令为运算类指令时
-	    	 */
-	    	else {
-	    		int num_idrs;
-	    		num_idrs=this.IDLE_resvstation(IS[num_issue], RS);
-	    		if(num_idrs!=-1)
-	    		{
-	    			instrsn.Qi=RS[num_idrs].Qi;
-	    			RS[num_idrs].Busy="yes";
-	    			resst[num_idrs+1][2]=RS[num_idrs].Busy;
-	    			RS[num_idrs].Op=instrsn.instruction.name;
-	    			resst[num_idrs+1][3]=RS[num_idrs].Op;
-	    			/**
-	    			 * 循环查询已发射指令，如其有目的寄存器作为当前指令的源操作数来源时进行处理
-	    			 */
-	    			boolean opj,opk;
-		    		opj=false;
-		    		opk=false;
-	    			for(int i=0;i<num_issue;i++)
-	    			{
-	    				String destination;
-	    				destination=IS[i].instruction.opr1;
-	    				/**
-	    				 * 源操作第一寄存器：Qj,Qk
-	    				 */
-	    				if(instrsn.instruction.opr2==destination)
-	    				{
-	    					opj=true;
-	    					for(int j=0;j<RegS.length;j++)
-	    					{
-	    						if(RegS[j].state==destination)
-	    						{
-	    							if(RegS[j].value=="")
-	    							{
-	    								RS[num_idrs].Qj=RegS[j].Qi;
-	    								resst[num_idrs+1][6]=RS[num_idrs].Qj;
-	    							}
-	    							else {
-										RS[num_idrs].Vj=RegS[j].value;
-										resst[num_idrs+1][4]=RS[num_idrs].Vj;
-									}
-	    							//break;
-	    						}
-	    					}
-	    				}
-	    				/**
-	    				 * 源操作第二寄存器：Vj,Vk
-	    				 */
-	    				if(instrsn.instruction.opr3==destination)
-	    				{
-	    					opk=true;
-	    					for(int j=0;j<RegS.length;j++)
-	    					{
-	    						if(RegS[j].state==destination)
-	    						{
-	    							if(RegS[j].value=="")
-	    							{
-	    								RS[num_idrs].Qk=RegS[j].Qi;
-	    								resst[num_idrs+1][7]=RS[num_idrs].Qk;
-	    							}
-	    							else {
-										RS[num_idrs].Vk=RegS[j].value;
-										resst[num_idrs+1][5]=RS[num_idrs].Vk;
-									}
-	    							//break;
-	    						}
-	    					}
-	    				}
-	    			}
-	    			/**
-	    			 * 若无寄存器相关，则直接对保留站操作数进行赋值
-	    			 */
-	    			if(!opj)
-	    			{
-	    				RS[num_idrs].Vj=instrsn.instruction.opr2;
-	    				resst[num_idrs+1][4]="R["+RS[num_idrs].Vj+"]";
-	    			}
-	    			if(!opk)
-	    			{
-	    				RS[num_idrs].Vk=instrsn.instruction.opr3;
-	    				resst[num_idrs+1][5]="R["+RS[num_idrs].Vk+"]";
-	    			}
-	    			
-	    		}
-	    	
-			}
-	    	/**
-	    	 * 寄存器站对该发射指令做出响应
-	    	 */
-	    	String destination2,Qi;
-	    	destination2=instrsn.instruction.opr1;
-	    	Qi=instrsn.Qi;
-	    	for(int i=0;i<this.RegS.length;i++)
-	    	{
-	    		if(RegS[i].state==destination2)
-	    		{
-	    			RegS[i].Qi=Qi;
-	    			regst[1][i+1]=RegS[i].Qi;
-	    			break;
-	    		}
-	    	}
-	    	/**
-	    	 * 修改该指令状态
-	    	 */
-	    	instst[num_issue+1][1]=String.valueOf(cnow);
-	    	IS[num_issue].state=1;
-	    }
-	    
-	    /**
-	     * 指令进入执行阶段：state值为1
-	     */
-	    for(int i=0;i<num_ex1.length;i++)
-	    {
-	    	if(num_ex1[i]!=-1)
-	    	{
-	    		InstructionStation instrnsex1=IS[num_ex1[i]];
-	    		/**
-	    		 * 当为load指令时，更新地址栏，更新指令状态集中的执行列表
-	    		 */
-	    		if(instrnsex1.instruction.name=="L.D")
-	    		{
-	    			for(int j=0;j<LS.length;j++)
-	    			{
-	    				if(LS[j].Qi==instrnsex1.Qi)
-	    				{
-	    					LS[j].Addr="R["+instrnsex1.instruction.opr3+"]"+instrnsex1.instruction.opr2;
-	    					ldst[j+1][2]=LS[j].Addr;
-	    					instrnsex1.excutetime--;
-	    					break;
-	    				}
-	    			}
-	    			if(instrnsex1.excutetime>0)
-	    			{
-	    				instst[num_ex1[i]+1][2]=String.valueOf(cnow)+"->";
-	    				IS[num_ex1[i]].state=2;
-	    			}
-	    			else if(instrnsex1.excutetime==0)
-	    			{
-	    				instst[num_ex1[i]+1][2]=String.valueOf(cnow);
-	    				IS[num_ex1[i]].state=3;
-	    			}
-	    		}
-	    		/**
-	    		 * 当为运算指令时，更新指令集执行时间列表
-	    		 */
-	    		else {
-	    			String Qi2= instrnsex1.Qi;
-					for(int j=0;j<RS.length;j++)
-					{
-						if(RS[j].Qi==instrnsex1.Qi)
-						{
-							if(!RS[j].Vj.equals("") && !RS[j].Vk.equals(""))
-							{
-								instrnsex1.excutetime--;
-								resst[j+1][0]=String.valueOf(instrnsex1.excutetime);
-								//instrnsex1.excutetime--;
-								
-								if(instrnsex1.excutetime>0)
-								{
-									instst[num_ex1[i]+1][2]=String.valueOf(cnow)+"->";
-									IS[num_ex1[i]].state=2;
-									break;
-									
-								}
-								else if(instrnsex1.excutetime==0)
-								{
-									instst[num_ex1[i]+1][2]=String.valueOf(cnow);
-									IS[num_ex1[i]].state=3;
-									break;
-								}
-							}
+	public void core(){
+		send_out_inst();
+		for(int i=0; i<IS.length;i++){
+			if(IS[i].out && !IS[i].wb){
+				if(checkrs(IS[i].Qi)){
+					IS[i].exec = true;
+					IS[i].excutetime -= 1;
+					if(IS[i].excutetime == 0){
+						if(!execute(IS[i].Qi)){
+							System.out.printf("wrong : %s",IS[i].Qi);
 						}
+						IS[i].wb = true;
 					}
 				}
-	    	}
-	    }
-		/**
-		 * 指令从执行到结束阶段，更新指令执行时间数
-		 */
-	    for(int i=0;i<num_ex2.length;i++)
-	    {
-	    	if(num_ex2[i]!=-1)
-	    	{
-	    		InstructionStation instrnsex2=IS[num_ex2[i]];
-	    		/**
-	    		 * 当指令为load指令时，更新load缓存中的值
-	    		 */
-	    		if(instrnsex2.instruction.name=="L.D")
-	    		{
-	    			for(int j=0;j<LS.length;j++)
-	    			{
-	    				if(LS[j].Qi==instrnsex2.Qi)
-	    				{
-	    					LS[j].value=Float.toString(mem[Integer.valueOf(LS[j].value).intValue()]);
-	    					ldst[j+1][3]=LS[j].value;
-	    					instrnsex2.excutetime--;
-	    					break;
-	    				}
-	    			}
-	    			if(instrnsex2.excutetime==0)
-	    			{
-	    				instst[num_ex2[i]+1][2]+=String.valueOf(cnow);
-	    				IS[num_ex2[i]].state=3;
-	    			}
-	    		}
-	    		/**
-	    		 * 如果为其他运算指令,更新保留站中的执行计时时间
-	    		 */
-	    		else {
-	    			int j;
-	    			for(j=0;j<RS.length;j++)
-					{
-						if(RS[j].Qi==instrnsex2.Qi)
-						{
-						    instrnsex2.excutetime--;
-						    if(instrnsex2.instruction.name == "ADD.D")
-						    {
-						    	RS[j].Answer = Float.toString(Float.parseFloat(RS[j].Vj)+Float.parseFloat(RS[j].Vk)); 
-						    }
-						    else if(instrnsex2.instruction.name == "SUB.D")
-						    {
-						    	RS[j].Answer = Float.toString(Float.parseFloat(RS[j].Vj)-Float.parseFloat(RS[j].Vk)); 
-						    }
-						    else if(instrnsex2.instruction.name == "MULT.D")
-						    {
-						    	System.out.printf("j = %d",j);
-						    	RS[j].Answer = Float.toString(Float.parseFloat(RS[j].Vj)*Float.parseFloat(RS[j].Vk)); 
-						    }
-						    else if(instrnsex2.instruction.name == "DIV.D")
-						    {
-						    	RS[j].Answer = Float.toString(Float.parseFloat(RS[j].Vj)/Float.parseFloat(RS[j].Vk)); 
-						    }
-						    resst[j+1][8] = RS[j].Answer;
-						    
-							resst[j+1][0]=String.valueOf(instrnsex2.excutetime);
-							break;
-						}
-					}
-	    			if(instrnsex2.excutetime==0)
-					{
-						instst[num_ex2[i]+1][2]+=String.valueOf(cnow);
-						IS[num_ex2[i]].state=3;
-						resst[j+1][0]="";
-					}
-				}
-	    	}
-	    }
-	    
-	    /**
-	     * 执行完毕，写回过程
-	     */
-	    for(int i=0;i<num_wb.length;i++)
-	    {
-	    	if(num_wb[i]!=-1)
-	    	{
-	    		InstructionStation instrnswb=IS[num_wb[i]];
-	    		String Qi4=instrnswb.Qi;
-	    		String ret = new String ();
-	    		/**
-	    		 * 指令为load指令时，写回，取消对load缓存站相应站位的占用
-	    		 */
-	    		if(instrnswb.instruction.name=="L.D")
-	    		{
-	    			for(int j=0;j<LS.length;j++)
-	    			{
-	    				if(LS[j].Qi==instrnswb.Qi)
-	    				{
-	    					LS[j].Busy="no";
-	    					LS[j].Addr="";
-	    					ret = LS[j].value;
-	    					LS[j].value="";
-	    					ldst[j+1][1]=LS[j].Busy;
-	    					ldst[j+1][2]=LS[j].Addr;
-	    					ldst[j+1][3]=LS[j].value;
-	    					break;
-	    				}
-	    			}
-	    		}
-	    		/**
-	    		 * 指令为其他指令时更新保留站的信息，解除相应保留站的占用
-	    		 */
-	    		else {
-					for(int j=0;j<RS.length;j++)
-					{
-						if(RS[j].Qi==Qi4)
-						{
-							ret = RS[j].Answer;
-							RS[j].Busy="no";
-							RS[j].Op="";
-							RS[j].Qj="";
-							RS[j].Qk="";
-							RS[j].Vj="";
-							RS[j].Vk="";
-							RS[j].Answer = "";
-							resst[j+1][2]=RS[j].Busy;
-							for(int k=3;k<9;k++)
-								resst[j+1][k]="";	
-							break;
-						}
-					}
-				}
-	    		/**
-	    		 * 更新指令目的寄存器对应的寄存器站
-	    		 */
-	    		for(int j=0;j<RegS.length;j++)
-	    		{
-	    			if(RegS[j].Qi==Qi4)
-	    			{
-	    				m++;
-	    				RegS[j].value=ret;
-	    				regst[2][j+1]=RegS[j].value;
-	    			}
-	    		}
-	    		/**
-	    		 * 更新保留站中需要该寄存器值的源操作数
-	    		 */
-	    		for(int j=0;j<RS.length;j++)
-	    		{
-	    			if(RS[j].Qj==Qi4)
-	    			{
-	    				RS[j].Vj=ret;
-	    				RS[j].Qj="";
-	    				resst[j+1][4]=RS[j].Vj;
-	    				resst[j+1][6]=RS[j].Qj;
-	    				continue;
-	    			}
-	    			if(RS[j].Qk==Qi4)
-	    			{
-	    				RS[j].Vk=ret;
-	    				RS[j].Qk="";
-	    				resst[j+1][5]=RS[j].Vk;
-	    				resst[j+1][7]=RS[j].Qk;
-	    			}
-	    		}
-	    		instst[num_wb[i]+1][3]=String.valueOf(cnow);
-	    		IS[num_wb[i]].state=4;
-	    	}
-	    }
-	    
-		boolean completed=true;
-		for(int l=0;l<IS.length;l++)
-		{
-			if(IS[l].instruction.name!="NOP" && instst[l+1][3]=="")
-			{
-				completed=false;
-				break;
 			}
 		}
-		if(completed==true)
-		{
-			stepbut.setEnabled(false);
-			stepnbut.setEnabled(false);
-		}
-	   
-	}
-    /**
-     * 获取空闲load缓存部件编号
-     * @param LS
-     * @return
-     */
-	private int IDLE_load(LoadStoreStation LS[]){
-		int num_idld=-1;
-		for(int i=0;i<LS.length;i++)
-		{
-			if(LS[i].Busy=="no")
-			{
-				num_idld=i;
-				break;
-			}
-		}
-		return num_idld;
-	}
-	private int IDLE_store(LoadStoreStation SS[]){
-		int num_idld=-1;
-		for(int i=0;i<SS.length;i++)
-		{
-			if(SS[i].Busy=="no")
-			{
-				num_idld=i;
-				break;
-			}
-		}
-		return num_idld;
-	}
-	/**
-	 * 获取空闲保留站计算部件(Add或Mult)编号
-	 * @param RS
-	 * @return
-	 */
-	private int IDLE_resvstation(InstructionStation IS,ReservationStation RS[])
-	{
-		int num_idrs=-1;
 		
-		if(IS.instruction.name=="MULT.D" || IS.instruction.name=="DIV.D")
-		{
-		    for(int i=3;i<5;i++)
-		    {
-			    if(RS[i].Busy=="no")
-			    {
-				    num_idrs=i;
-				    break;
-			    }
-		    }
+		
+		for(int i = 0;i<RegS.length;i++){
+			regst[1][i+1] = RegS[i].Qi;
+			regst[2][i+1] = RegS[i].value;
 		}
-		else if(IS.instruction.name=="ADD.D" || IS.instruction.name=="SUB.D")
-		{
-		    for(int i=0;i<3;i++)
-		    {
-			    if(RS[i].Busy=="no")
-			    {
-				    num_idrs=i;
-				    break;
-			    }
-		    }
+		for(int i = 0;i<LS.length;i++){
+			ldst[i+1][1] = LS[i].Busy;
+			ldst[i+1][2] = LS[i].Addr;
+			ldst[i+1][3] = LS[i].value;
 		}
-		return num_idrs;
-	}
-    /**
-     * 返回等待执行写回的指令编号(发射序排列)
-     * @param IS
-     * @return
-     */
-	private int[] WB_getstate(InstructionStation IS[]) {
-		int n=0;
-		for(int i=0;i<IS.length;i++)
-		{
-			if(IS[i].state==3 && IS[i].Qi!="NOP")
-			{
-				n++;
+		for(int i = 0;i<SS.length;i++){
+			stst[i+1][1] = SS[i].Busy;
+			stst[i+1][2] = SS[i].Addr;
+			stst[i+1][3] = SS[i].value;
+		}
+		for(int i = 0;i<RS.length;i++){
+			resst[i+1][1] = RS[i].Qi;
+			resst[i+1][2] = RS[i].Busy;
+			resst[i+1][3] = RS[i].Op;
+			resst[i+1][4] = RS[i].Vj;
+			resst[i+1][5] = RS[i].Vk;
+			resst[i+1][6] = RS[i].Qj;
+			resst[i+1][7] = RS[i].Qk;
+			resst[i+1][8] = RS[i].Answer;
+		}
+		for(int i=0;i<IS.length;i++){
+			if(IS[i].out){
+				instst[i+1][1] = "√";
 			}
-		}
-		int num_wb[] = new int[n];
-        for(int i=0;i<n;i++)
-        {
-        	num_wb[i]=-1;
-        }
-        /**
-         * 找出执行完毕却没有写回的指令，返回其在指令队列中的位置
-         */
-        for(int i=0,j=0;i<IS.length;i++)
-		{
-			if(IS[i].state==3 && IS[i].Qi!="NOP")
-			{
-				num_wb[j]=i;
-				j++;
+			if(IS[i].exec){
+				instst[i+1][2] = "√";
 			}
+			if(IS[i].wb){
+				instst[i+1][3] = "√";
+			}		
 		}
-        return num_wb;
-	}
-    /**
-     * 返回正在执行还未执行完毕的指令编号
-     * @param IS
-     * @return
-     */
-	private int[] EX2_getstate(InstructionStation IS[]) {
-		int n=0;
-		for(int i=0;i<IS.length;i++)
-		{
-			if(IS[i].state==2 && IS[i].Qi!="NOP")
-			{
-				n++;
-			}
-		}
-		int num_ex2[] = new int[n];
-        for(int i=0;i<n;i++)
-        {
-        	num_ex2[i]=-1;
-        }
-        /**
-         * 找出正在执行却没有执行完毕的指令，返回其在指令队列中的位置
-         */
-        for(int i=0,j=0;i<IS.length;i++)
-		{
-			if(IS[i].state==2 && IS[i].Qi!="NOP")
-			{
-				num_ex2[j]=i;
-				j++;
-			}
-		}
-        return num_ex2;
-	}
-    /**
-     * 返回等待执行的指令编号
-     * @param IS
-     * @return
-     */
-	private int[] EX1_getstate(InstructionStation IS[]) {
-		int n=0;
-		for(int i=0;i<IS.length;i++)
-		{
-			if(IS[i].state==1 && IS[i].Qi!="NOP")
-			{
-				n++;
-			}
-		}
-		int num_ex1[] = new int[n];
-        for(int i=0;i<n;i++)
-        {
-        	num_ex1[i]=-1;
-        }
-        /**
-         * 找出已发射但还在等待执行的指令，返回其在指令队列中的位置
-         */
-        for(int i=0,j=0;i<IS.length;i++)
-		{
-			if(IS[i].state==1 && IS[i].Qi!="NOP")
-			{
-				num_ex1[j]=i;
-				j++;
-			}
-		}
-        return num_ex1;
 		
 	}
-    /**
-     * 返回等待发射的指令编号
-     * @param IS
-     * @return
-     */
-	private int IS_getstate(InstructionStation IS[]) {
-		int num_issue=-1;
-		   for(int i=0;i<IS.length;i++)
-		   {
-			   if(IS[i].state==0 && IS[i].Qi!="NOP")
-			   {
-				   num_issue=i;
-				   break;
-			   }
-		   }
-		   return num_issue;
+	public void guangbo(String Q,String value){
+		for(int i =0; i<SS.length;i++){
+			if(SS[i].value.equals(Q)){
+				SS[i].value = value;
+			}
+		}
+		for(int i =0; i<RS.length;i++){
+			if(RS[i].Qj.equals(Q)){
+				RS[i].Qj = "0";
+				RS[i].Vj = value;
+			}
+			if(RS[i].Qk.equals(Q)){
+				RS[i].Qk = "0";
+				RS[i].Vk = value;
+			}
+		}
+		for(int i =0; i<RegS.length;i++){
+			if(RegS[i].Qi.equals(Q)){
+				RegS[i].Qi = "";
+				RegS[i].value = value;
+			}
+		}
+	}
+	
+	
+	public boolean execute(String Q){
+		int num = Integer.parseInt(Q.substring(Q.length()-1, Q.length()));
+		String type = Q.substring(0, Q.length()-1);
+		//System.out.println(Q);
+		if(type.equals("Load")){
+			if(LS[num-1].ready){
+				LS[num-1].ready = false;
+				LS[num-1].Addr = "";
+				LS[num-1].Busy = "no";
+				guangbo(Q, LS[num-1].value);
+				LS[num-1].value = "";
+				return true;
+			}
+		}else if(type.equals("Store")){
+			if(SS[num-1].ready){
+				int addr = Integer.parseInt(SS[num-1].Addr);
+				mem[addr] = Float.parseFloat(SS[num-1].value);
+				SS[num-1].ready = false;
+				SS[num-1].Addr = "";
+				SS[num-1].Busy = "no";
+				SS[num-1].value = "";
+				return true;
+			}
+		}else if(type.equals("ADD")){
+			if(RS[num-1].Qj=="0"&&RS[num-1].Qk=="0"){
+				float op1 =Float.parseFloat(RS[num-1].Vj);
+				float op2 =Float.parseFloat(RS[num-1].Vk);
+				float res;
+				if(RS[num-1].Op=="ADD.D"){
+					res = op1 + op2;
+					guangbo(Q,Float.toString(res));
+				}else if(RS[num-1].Op=="SUB.D"){
+					res = op1 - op2;
+					guangbo(Q,Float.toString(res));
+				}
+				RS[num-1].Answer = "";
+				RS[num-1].Busy = "no";
+				RS[num-1].Op = "";
+				RS[num-1].Qj = "";
+				RS[num-1].Qk = "";
+				RS[num-1].Vj = "";
+				RS[num-1].Vk = "";
+				return true;
+			}
+		}else if(type.equals("MULT")){
+			if(RS[num+2].Qj=="0"&&RS[num+2].Qk=="0"){
+				float op1 =Float.parseFloat(RS[num+2].Vj);
+				float op2 =Float.parseFloat(RS[num+2].Vk);
+				float res;
+				if(RS[num+2].Op=="MULT.D"){
+					res = op1 * op2;
+					guangbo(Q,Float.toString(res));
+				}else if(RS[num+2].Op=="DIV.D"){
+					if(op2 == 0)op2 = (float) 0.1;
+					res = op1 / op2;
+					guangbo(Q,Float.toString(res));
+				}
+				RS[num+2].Answer = "";
+				RS[num+2].Busy = "no";
+				RS[num+2].Op = "";
+				RS[num+2].Qj = "";
+				RS[num+2].Qk = "";
+				RS[num+2].Vj = "";
+				RS[num+2].Vk = "";
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	
+	public boolean checkrs(String Q){
+		int num = Integer.parseInt(Q.substring(Q.length()-1, Q.length()));
+		String type = Q.substring(0, Q.length()-1);
+		if(type.equals("Load")){
+			if(LS[num-1].ready){
+				return true;
+			}
+		}else if(type.equals("Store")){
+			if(SS[num-1].ready){
+				return true;
+			}
+		}else if(type.equals("ADD")){
+			if(RS[num-1].Qj=="0"&&RS[num-1].Qk=="0"){
+				return true;
+			}
+		}else if(type.equals("MULT")){
+			if(RS[num+2].Qj=="0"&&RS[num+2].Qk=="0"){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	
+	public void send_out_inst(){
+		//需要发射的指令
+		int need_out = -1;
+		for(int i = 0; i<IS.length;i++){
+			if(!IS[i].out){
+				need_out = i;
+				break;
+			}
+		}
+		if(need_out != -1){
+			Instruction out = IS[need_out].instruction;
+			if(out.name.equals("ST.D")){//Store指令
+				String reg = out.opr1;
+				String addr = out.opr2;
+				int regi = Integer.parseInt(reg.substring(1, reg.length()));	
+				for(int i=0;i<SS.length;i++){//查询空闲的Store缓存，将regi里的值放入内存addr
+					if(SS[i].Busy == "no"){//空闲Strore缓存
+						IS[need_out].out = true;
+						IS[need_out].Qi = SS[i].Qi;
+						SS[i].Busy = "yes";
+						SS[i].Addr = addr;
+						if(RegS[regi].Qi == ""){//数据准备好了
+							SS[i].value = RegS[regi].value;		
+							SS[i].ready = true;
+						}else{//数据没准备好
+							SS[i].value = RegS[regi].Qi;							
+						}
+						break;
+					}
+				}
+			}else if(out.name.equals("L.D")){//Load指令
+				String reg = out.opr1;
+				String addr = out.opr2;
+				int regi = Integer.parseInt(reg.substring(1, reg.length()));
+				for(int i=0;i<LS.length;i++){//查询空闲的Load缓存，将addr里的值放入寄存器regi
+					if(LS[i].Busy == "no"){//空闲Load缓存
+						IS[need_out].out = true;
+						IS[need_out].Qi = LS[i].Qi;
+						LS[i].Busy = "yes";
+						LS[i].Addr = addr;
+						LS[i].value = Float.toString(mem[Integer.parseInt(addr)]);
+						if(RegS[regi].Qi == ""){//数据准备好了
+							RegS[regi].Qi = "Load" + Integer.toString(i+1);	
+							LS[i].ready = true;
+						}else{//数据没准备好
+							LS[i].value = RegS[regi].Qi;						
+						}
+						break;
+					}
+				}
+			}else if(out.name.equals("ADD.D")||out.name.equals("SUB.D")||out.name.equals("MULT.D")||out.name.equals("DIV.D")){
+				int rd = Integer.parseInt(out.opr1.substring(1, out.opr1.length()));
+				int r1 = Integer.parseInt(out.opr2.substring(1, out.opr2.length()));
+				int r2 = Integer.parseInt(out.opr3.substring(1, out.opr3.length()));
+				for(int i=0;i<5;i++){//查询空闲的保留站，将rd = r1 + r2,或rd = r1 - r2
+					if(RS[i].Busy == "no"){//空闲的保留站
+						if(out.name.equals("ADD.D")||out.name.equals("SUB.D")){
+							if(i>=3)continue;
+						}
+						if(out.name.equals("MULT.D")||out.name.equals("DIV.D")){
+							if(i<3)continue;
+						}
+						IS[need_out].out = true;
+						IS[need_out].Qi = RS[i].Qi;
+						RS[i].Busy = "yes";
+						RS[i].Op = out.name;
+						RegS[rd].Qi = RS[i].Qi;
+						if(RegS[r1].Qi == ""){
+							RS[i].Vj = RegS[r1].value;
+							RS[i].Qj = "0";
+						}else{
+							RS[i].Qj = RegS[r1].Qi;
+						}
+						if(RegS[r2].Qi == ""){
+							RS[i].Vk= RegS[r2].value;
+							RS[i].Qk = "0";
+						}else{
+							RS[i].Qk = RegS[r2].Qi;
+						}
+						break;
+					}
+				}
+			}
+			
+		}
 	}
 
 	public static void main(String[] args) {

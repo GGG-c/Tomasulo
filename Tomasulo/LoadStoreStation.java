@@ -16,4 +16,6 @@ public class LoadStoreStation{
 	 * ·Ã´æÖµ
 	 */
 	String value;
+	
+	boolean ready;
 }
