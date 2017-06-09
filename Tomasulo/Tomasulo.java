@@ -118,14 +118,14 @@ public class Tomasulo extends JFrame implements ActionListener{
 	 *regst：寄存器列表(3行23列) 
 	 *stst：store缓存列表(4行4列)
 	 * */
-	private	String  instst[][]=new String[7][4], resst[][]=new String[6][9],
+	private	String  instst[][]=new String[7][5], resst[][]=new String[6][9],
 					ldst[][]=new String[4][4], regst[][]=new String[3][12],
 					stst[][]=new String[4][4];
-	private String  culinstst[][]=new String[7][4], culresst[][]=new String[6][9],
+	private String  culinstst[][]=new String[7][5], culresst[][]=new String[6][9],
 			        culldst[][]=new String[4][4], culregst[][]=new String[3][12],
 			        culstst[][]=new String[4][4];
 	/*将以上String值加入到列表框中*/
-	private	JLabel  instjl[][]=new JLabel[7][4], resjl[][]=new JLabel[6][9],
+	private	JLabel  instjl[][]=new JLabel[7][5], resjl[][]=new JLabel[6][9],
 					ldjl[][]=new JLabel[4][4], regjl[][]=new JLabel[3][12],
 					stjl[][]=new JLabel[4][4];
 	
@@ -139,7 +139,9 @@ public class Tomasulo extends JFrame implements ActionListener{
 	private LoadStoreStation SS[] = new LoadStoreStation[3];
 	private RegisterStation RegS[] = new RegisterStation[11];
 	
-	private int load_lock,store_lock;
+	private int load_queue[] = new int[3];
+	private int store_queue[] = new int[3];
+	
 	
 	/*
 	 * 初始化内存
@@ -170,7 +172,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 
 		//指令状态
 		insl = new JLabel("指令状态");
-		panel3 = new JPanel(new GridLayout(7,4,0,0));
+		panel3 = new JPanel(new GridLayout(7,5,0,0));
 		panel3.setPreferredSize(new Dimension(420, 175));
 		panel3.setBorder(new EtchedBorder(EtchedBorder.RAISED));
 
@@ -325,7 +327,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 //指令状态设置
 		for (int i=0;i<7;i++)
 		{
-			for (int j=0;j<4;j++){
+			for (int j=0;j<5;j++){
 				instjl[i][j]=new JLabel(instst[i][j]);
 				instjl[i][j].setBorder(new EtchedBorder(EtchedBorder.RAISED));
 				panel3.add(instjl[i][j]);
@@ -479,7 +481,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 		setmembut.setVisible(false);
 		panel8.setVisible(false);
 		panel9.setVisible(false);
-		setSize(860,820);
+		setSize(860,1020);
 		setVisible(true);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	}
@@ -488,8 +490,10 @@ public class Tomasulo extends JFrame implements ActionListener{
  * 点击”执行“按钮后，根据选择的指令，初始化其他几个面板
  */
 	public void init(){
-		load_lock = 0;
-		store_lock = 0;
+		for(int i=0;i<3;i++){
+			load_queue[i] = -1;
+			store_queue[i] = -1;		
+		}
 		/*intv：6行4列的整型数组*/
 		for (int i=0;i<6;i++){
 			intv[i][0]=instbox[i*4].getSelectedIndex();
@@ -520,6 +524,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 		instst[0][1]="流出";
 		instst[0][2]="执行";
 		instst[0][3]="写回";
+		instst[0][4]="剩余周期数";
 
 
 		ldst[0][0]="名称";
@@ -705,7 +710,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 	}
 	
 	public int getTimeForEX(Instruction instruction){
-		if(instruction.name=="L.D")
+		if(instruction.name=="L.D" || instruction.name=="ST.D")
 		{
 			return Integer.parseInt(tt1.getText());
 //			return 2;
@@ -735,7 +740,7 @@ public class Tomasulo extends JFrame implements ActionListener{
  */
 	public void display(){
 		for (int i=0;i<7;i++)
-			for (int j=0;j<4;j++){
+			for (int j=0;j<5;j++){
 				instjl[i][j].setText(instst[i][j]);
 			}
 		for (int i=0;i<6;i++)
@@ -971,6 +976,7 @@ public class Tomasulo extends JFrame implements ActionListener{
 					}
 				}
 			}
+			instf.setVisible(false);
 		}
 //点击“Cancel”按钮的监听器	
 		if (e.getSource()==cancel) {
@@ -1023,8 +1029,11 @@ public class Tomasulo extends JFrame implements ActionListener{
 				}
 			}
 		}
-		
-		
+//		for(int i=0;i<3;i++){
+//			System.out.printf("%d ",load_queue[i]);
+//			System.out.printf("%d \n",store_queue[i]);
+//		}
+				
 		for(int i = 0;i<RegS.length;i++){
 			regst[1][i+1] = RegS[i].Qi;
 			regst[2][i+1] = RegS[i].value;
@@ -1058,7 +1067,8 @@ public class Tomasulo extends JFrame implements ActionListener{
 			}
 			if(IS[i].wb){
 				instst[i+1][3] = "√";
-			}		
+			}
+			instst[i+1][4] = Integer.toString(IS[i].excutetime);
 		}
 		
 	}
@@ -1098,6 +1108,10 @@ public class Tomasulo extends JFrame implements ActionListener{
 				LS[num-1].Busy = "no";
 				guangbo(Q, LS[num-1].value);
 				LS[num-1].value = "";
+				for(int i=0;i<2;i++){
+					load_queue[i] = load_queue[i+1];
+				}
+				load_queue[2] = -1;
 				return true;
 			}
 		}else if(type.equals("Store")){
@@ -1108,6 +1122,10 @@ public class Tomasulo extends JFrame implements ActionListener{
 				SS[num-1].Addr = "";
 				SS[num-1].Busy = "no";
 				SS[num-1].value = "";
+				for(int i=0;i<2;i++){
+					store_queue[i] = store_queue[i+1];
+				}
+				store_queue[2] = -1;
 				return true;
 			}
 		}else if(type.equals("ADD")){
@@ -1162,10 +1180,10 @@ public class Tomasulo extends JFrame implements ActionListener{
 		int num = Integer.parseInt(Q.substring(Q.length()-1, Q.length()));
 		String type = Q.substring(0, Q.length()-1);
 		if(type.equals("Load")){
-			if(LS[num-1].ready){
+			if(LS[num-1].ready && load_queue[0]==num-1){
 				return true;
 			}
-		}else if(type.equals("Store")){
+		}else if(type.equals("Store") && store_queue[0]==num-1){
 			if(SS[num-1].ready){
 				return true;
 			}
@@ -1203,6 +1221,13 @@ public class Tomasulo extends JFrame implements ActionListener{
 						IS[need_out].Qi = SS[i].Qi;
 						SS[i].Busy = "yes";
 						SS[i].Addr = addr;
+						for(int ii=0;ii<3;ii++){
+							if(store_queue[ii]==-1){
+								store_queue[ii] = i;
+								break;
+							}
+						}
+						
 						if(RegS[regi].Qi == ""){//数据准备好了
 							SS[i].value = RegS[regi].value;		
 							SS[i].ready = true;
@@ -1223,6 +1248,12 @@ public class Tomasulo extends JFrame implements ActionListener{
 						LS[i].Busy = "yes";
 						LS[i].Addr = addr;
 						LS[i].value = Float.toString(mem[Integer.parseInt(addr)]);
+						for(int ii=0;ii<3;ii++){
+							if(load_queue[ii]==-1){
+								load_queue[ii] = i;
+								break;
+							}
+						}
 						if(RegS[regi].Qi == ""){//数据准备好了
 							RegS[regi].Qi = "Load" + Integer.toString(i+1);	
 							LS[i].ready = true;

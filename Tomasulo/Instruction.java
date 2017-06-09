@@ -1,8 +1,4 @@
-/**
- * 指令队列
- * @author caoxin
- *
- */
+
 public class Instruction{
     /**
      * 指令名称
